@@ -9,4 +9,21 @@
 #   email to their point of contact asking for new prices.
 #
 
+import pypyodbc
+
 print "This is a script"
+
+connection = pypyodbc.connect("Driver={SQL Server}; Server=ERPSQL;Database=Epicor10")
+cursor = connection.cursor()
+
+cursor.execute ("USE Epicor10 GO SELECT name, server_id, provider FROM sys.servers GO")
+
+results = cursor.fetchone()
+
+print "The expired vendor table:"
+
+while results:
+    print ("Vendor: " + results[0] + " ExpirationDate: " + str(results[1]))
+
+results = cursor.fetchone()
+connection.close()
