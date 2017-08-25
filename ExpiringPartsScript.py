@@ -9,14 +9,13 @@
 #   email to their point of contact asking for new prices.
 #
 
-import pypyodbc
+import MySQLdb
 
-print "This is a script"
+connection = MySQLdb.connect(host="ERPSQL",db="Epicor10")
 
-connection = pypyodbc.connect("Driver={SQL Server}; Server=ERPSQL;Database=Epicor10")
 cursor = connection.cursor()
 
-cursor.execute ("USE Epicor10 GO SELECT name, server_id, provider FROM sys.servers GO")
+cursor.execute ("SELECT VendorID, ExpirationDate FROM Epicor10.dbo.Vendor.VendorID")
 
 results = cursor.fetchone()
 
