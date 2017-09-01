@@ -10,42 +10,76 @@
 #
 
 import pyodbc
+import wx
 
-#Set database and server variables so the code is easily portable
-server = 'ERPSQL'
-database = 'EpicorTest10'
+def main():
+    #Set database and server variables so the code is easily portable
+    server = 'ERPSQL'
+    database = 'EpicorTest10'
 
-#Create a string to input to the pyodbc connnection method.  Creating it allows it to be formatted with
-# the correct database.
-connection_string = 'Driver={SQL Server};Server=ERPSQL;Database=%s;Trusted_Connection=yes;' % (database)
+    #Create a string to input to the pyodbc connnection method.  Creating it allows it to be formatted with
+    # the correct database.
+    connection_string = 'Driver={SQL Server};Server=ERPSQL;Database=%s;Trusted_Connection=yes;' % (database)
 
-#Create a string for the query that can be easily updated with a new database, allowing mutability of code.
-query_string = '''SELECT     T1.VendorID, T1.ExpirationDate
-FROM         (SELECT     %(db)s.dbo.Vendor.VendorID, MAX(%(db)s.Erp.VendPart.ExpirationDate) AS ExpirationDate
-              FROM          %(db)s.Erp.VendPart INNER JOIN
-              %(db)s.dbo.Vendor ON %(db)s.Erp.VendPart.VendorNum = %(db)s.dbo.Vendor.VendorNum
-              GROUP BY %(db)s.dbo.Vendor.VendorID) AS T1
-WHERE     (ExpirationDate <= DATEADD(month, 1, GETDATE()))''' % {'db': database}
+    #Create a string for the query that can be easily updated with a new database, allowing mutability of code.
+    query_string = '''SELECT     T1.VendorID, T1.ExpirationDate
+    FROM         (SELECT     %(db)s.dbo.Vendor.VendorID, MAX(%(db)s.Erp.VendPart.ExpirationDate) AS ExpirationDate
+                  FROM          %(db)s.Erp.VendPart INNER JOIN
+                  %(db)s.dbo.Vendor ON %(db)s.Erp.VendPart.VendorNum = %(db)s.dbo.Vendor.VendorNum
+                  GROUP BY %(db)s.dbo.Vendor.VendorID) AS T1
+    WHERE     (ExpirationDate <= DATEADD(month, 1, GETDATE()))''' % {'db': database}
 
-#Now, use the connection string as the input to the pyodbc.connect() method to
-# to form the database connection.
-connection = pyodbc.connect(connection_string)
-#Instantiate a cursor to the connection to allow a query to be performed.
-cursor = connection.cursor()
-#Execute the query_string with cursor.execute() method to get the expiring vendor data.
-cursor.execute (query_string)
-#Obtain all the results to allow them to be parsed through.
-results = cursor.fetchall()
+    #Now, use the connection string as the input to the pyodbc.connect() method to
+    # to form the database connection.
+    connection = pyodbc.connect(connection_string)
+    #Instantiate a cursor to the connection to allow a query to be performed.
+    cursor = connection.cursor()
+    #Execute the query_string with cursor.execute() method to get the expiring vendor data.
+    cursor.execute (query_string)
+    #Obtain all the results to allow them to be parsed through.
+    results = cursor.fetchall()
 
-#Output a python desktop notification to inform the operator of the incoming
-# expiration date and confirm whether they want to send an email to the vendor.
-print "The expired vendor table:"
-for row in results:
-    print ("Vendor: " + row[0] + "  ExpirationDate: " + row[1])
+    #Create a desktop notification to inform the operator that prices are soon to expire for
+    #  listed vendors.
+    app = wx.App(False)
+    frame = MainWindow(None, "Expiration Notifier")
+    app.MainLoop()
 
-for row in results:
-    print ("Vendor: " + row[0] + "  ExpirationDate: " + row[1])
+    #Output a python desktop notification to inform the operator of the incoming
+    # expiration date and confirm whether they want to send an email to the vendor.
+    print "The expired vendor table:"
+    for row in results:
+        print ("Vendor: " + row[0] + "  ExpirationDate: " + row[1])
+
+    for row in results:
+        print ("Vendor: " + row[0] + "  ExpirationDate: " + row[1])
+
+    connection.close()
+
+class MainWindow(wx.Frame):
+       def __init__(self, parent, title):
+         wx.Frame.__init__(self, parent, title=title, size=(200,100))
+         self.control = wx.TextCtrl(self, style=wx.TE_MULTILINE)
+         self.CreateStatusBar() # A Statusbar in the bottom of the window
+
+         # Setting up the menu.
+         filemenu= wx.Menu()
+
+         # wx.ID_ABOUT and wx.ID_EXIT are standard IDs provided by wxWidgets.
+         menuAbout = filemenu.Appen(wx.ID_ABOUT, "&About", Information about this program)
+         menuExit = filemenu.Append(wx.ID_EXIT, "&Exit", Terminate the program)
 
 
+         filemenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
+         filemenu.AppendSeparator()
+         filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
 
-connection.close()
+         # Creating the menubar.
+         menuBar = wx.MenuBar()
+         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
+         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
+         self.Show(True)
+
+#Execute the main function
+if __name__ == '__main__':
+    main()
