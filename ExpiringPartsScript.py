@@ -66,19 +66,30 @@ class MainWindow(wx.Frame):
          filemenu= wx.Menu()
 
          # wx.ID_ABOUT and wx.ID_EXIT are standard IDs provided by wxWidgets.
-         menuAbout = filemenu.Appen(wx.ID_ABOUT, "&About", Information about this program)
+         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", Information about this program)
          menuExit = filemenu.Append(wx.ID_EXIT, "&Exit", Terminate the program)
 
-
-         filemenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
-         filemenu.AppendSeparator()
-         filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
-
-         # Creating the menubar.
+         #Create the menu bar
          menuBar = wx.MenuBar()
-         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
-         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
+         menuBar.Append(filemenu, "&File")
+         self.SetMenuBar(menuBar)
+
+         #Set events
+         self.Bind(wx.EVT_MENU, self.OnAbout, menuAbout)
+         self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
+
          self.Show(True)
+
+        def OnAbout(self,e):
+             # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
+             dlg = wx.MessageDialog( self, "A small text editor", "About Sample Editor", wx.OK)
+             dlg.ShowModal() # Show it
+             dlg.Destroy() # finally destroy it when finished.
+
+       def OnExit(self,e):
+            self.Close(True)  # Close the frame.
+
+
 
 #Execute the main function
 if __name__ == '__main__':
